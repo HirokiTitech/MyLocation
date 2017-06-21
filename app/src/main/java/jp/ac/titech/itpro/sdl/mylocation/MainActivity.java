@@ -3,6 +3,7 @@ package jp.ac.titech.itpro.sdl.mylocation;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -17,14 +18,28 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.HttpURLConnection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     private final static String TAG = "MainActivity";
+    private final static int ID = 0;
 
+    // for GPS
     private TextView latLongView;
     private GoogleApiClient googleApiClient;
+    private double latitude, longitude;
+    private String nowTime;
+    // for http connection
+    private HttpResponsAsync httpResponsAsync;
 
     private final static String[] PERMISSIONS = {
             Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -44,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        httpResponsAsync = new HttpResponsAsync(this);
     }
 
     @Override
@@ -101,12 +118,33 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         Location loc = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-        if (loc != null)
-            displayLocation(loc);
+        if (loc != null) {
+            latitude = loc.getLatitude();
+            longitude = loc.getLongitude();
+            JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObjectChild = new JSONObject();
+            try{
+                jsonObjectChild.put("pole_id",ID);
+                jsonObjectChild.put("lng",longitude);
+                jsonObjectChild.put("lat",latitude);
+                final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                final Date date = new Date(System.currentTimeMillis());
+                nowTime =  df.format(date);
+                jsonObjectChild.put("time",nowTime);
+                jsonObject.put("data",jsonObjectChild);
+
+                httpResponsAsync.execute(jsonObject);
+
+                Log.d(TAG,jsonObject.toString());
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            displayLocation();
+        }
     }
 
-    private void displayLocation(Location loc) {
-        latLongView.setText(getString(R.string.latlong_format,
-                loc.getLatitude(), loc.getLongitude()));
+    private void displayLocation() {
+        latLongView.setText(getString(R.string.latlong_format, latitude, longitude));
     }
 }
