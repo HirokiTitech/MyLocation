@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements
                 .addApi(LocationServices.API)
                 .build();
 
-        httpResponsAsync = new HttpResponsAsync(this);
+
     }
 
     @Override
@@ -132,7 +132,8 @@ public class MainActivity extends AppCompatActivity implements
                 nowTime =  df.format(date);
                 jsonObjectChild.put("time",nowTime);
                 jsonObject.put("data",jsonObjectChild);
-
+                Log.d(TAG,"JSON FINISH");
+                httpResponsAsync = new HttpResponsAsync(this);
                 httpResponsAsync.execute(jsonObject);
 
                 Log.d(TAG,jsonObject.toString());

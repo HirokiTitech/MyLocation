@@ -1,6 +1,7 @@
 package jp.ac.titech.itpro.sdl.mylocation;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -15,8 +16,11 @@ import java.net.URL;
  * Created by kayalibra on 2017/06/20.
  */
 
-public class HttpResponsAsync extends AsyncTask {
-    private static final String HOST_URL = "http://sample.jp";
+public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
+
+
+    private final static String TAG = "HttpResponsAsync";
+    private static final String HOST_URL = "https://sodium-carver-170712.appspot.com/api/test";
 
     public HttpResponsAsync(MainActivity mainActivity) {
 
@@ -24,10 +28,11 @@ public class HttpResponsAsync extends AsyncTask {
 
 
     @Override
-    protected Object doInBackground(Object[] params) {
+    protected Void doInBackground(JSONObject... params) {
         HttpURLConnection httpURLConnection = null;
         URL url = null;
         String urlString = HOST_URL;
+        Log.d(TAG, "doInBackground is called");
         try {
             url = new URL(urlString);
             httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -35,7 +40,7 @@ public class HttpResponsAsync extends AsyncTask {
             httpURLConnection.setConnectTimeout(100000);
             httpURLConnection.setReadTimeout(100000);
 
-            httpURLConnection.setRequestMethod("Post");
+            httpURLConnection.setRequestMethod("POST");
             httpURLConnection.setDoOutput(true);
 
             httpURLConnection.setRequestProperty("Accept-Language", "jp");
@@ -46,7 +51,9 @@ public class HttpResponsAsync extends AsyncTask {
             OutputStream outputStream = httpURLConnection.getOutputStream();
             PrintStream printStreams = new PrintStream(httpURLConnection.getOutputStream());
 
-            printStreams.print(params);
+            Log.d(TAG, params[0].toString());
+
+            printStreams.print(params[0]);
             printStreams.close();
 
             outputStream.close();
