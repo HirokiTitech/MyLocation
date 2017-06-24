@@ -5,9 +5,13 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,9 +22,9 @@ import java.net.URL;
 
 public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
 
-
     private final static String TAG = "HttpResponsAsync";
     private static final String HOST_URL = "https://sodium-carver-170712.appspot.com/api/test";
+    //private static final String HOST_URL = "http://www.yahoo.co.jp/";
 
     public HttpResponsAsync(MainActivity mainActivity) {
 
@@ -33,6 +37,7 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
         URL url = null;
         String urlString = HOST_URL;
         Log.d(TAG, "doInBackground is called");
+        Log.d(TAG, "param[0]:" + params[0].toString());
         try {
             url = new URL(urlString);
             httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -43,15 +48,19 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
             httpURLConnection.setRequestMethod("POST");
             httpURLConnection.setDoOutput(true);
 
+            httpURLConnection.setDoInput(true);
+
             httpURLConnection.setRequestProperty("Accept-Language", "jp");
             httpURLConnection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 
             httpURLConnection.connect();
 
+            InputStream inputStream = httpURLConnection.getInputStream();
+            String readSt = readInputStream(inputStream);
+            Log.d(TAG, "bodyByte:" + readSt);
+
             OutputStream outputStream = httpURLConnection.getOutputStream();
             PrintStream printStreams = new PrintStream(httpURLConnection.getOutputStream());
-
-            Log.d(TAG, params[0].toString());
 
             printStreams.print(params[0]);
             printStreams.close();
@@ -65,5 +74,26 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
         }
 
         return null;
+    }
+
+    public String readInputStream(InputStream in) throws IOException, UnsupportedEncodingException {
+        StringBuffer sb = new StringBuffer();
+        String st = "";
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+        while((st = br.readLine()) != null)
+        {
+            sb.append(st);
+        }
+        try
+        {
+            in.close();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return sb.toString();
     }
 }
