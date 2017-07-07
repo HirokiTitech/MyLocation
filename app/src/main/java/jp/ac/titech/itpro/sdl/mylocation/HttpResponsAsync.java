@@ -16,6 +16,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import java.io.IOException;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 /**
  * Created by kayalibra on 2017/06/20.
  */
@@ -23,9 +30,10 @@ import java.net.URL;
 public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
 
     private final static String TAG = "HttpResponsAsync";
-    private static final String HOST_URL = "https://sodium-carver-170712.appspot.com/api/test";
+    private static final String HOST_URL = "https://sodium-carver-170712.appspot.com/api/insert_pole";
+    //private static final String HOST_URL = "https://sodium-carver-170712.appspot.com";
     //private static final String HOST_URL = "http://www.yahoo.co.jp/";
-
+    //private static final String HOST_URL = "https://ja.wikipedia.org";
     public HttpResponsAsync(MainActivity mainActivity) {
 
     }
@@ -33,6 +41,18 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
 
     @Override
     protected Void doInBackground(JSONObject... params) {
+        OkHttpClient client = new OkHttpClient();
+        String url = HOST_URL;
+        MediaType JSON= MediaType.parse("application/json");
+        RequestBody requestBody = RequestBody.create (JSON, params[0].toString());
+        Request request = new Request.Builder().url(url).post(requestBody).build();
+        try {
+            Response response = client.newCall(request).execute();
+            Log.d(TAG,"Body   " + response.body().string());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*
         HttpURLConnection httpURLConnection = null;
         URL url = null;
         String urlString = HOST_URL;
@@ -45,6 +65,7 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
             httpURLConnection.setConnectTimeout(100000);
             httpURLConnection.setReadTimeout(100000);
 
+            //httpURLConnection.setRequestMethod("POST");
             httpURLConnection.setRequestMethod("POST");
             httpURLConnection.setDoOutput(true);
 
@@ -72,6 +93,8 @@ public class HttpResponsAsync extends AsyncTask <JSONObject, Void, Void>{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        httpURLConnection.disconnect();
+        */
 
         return null;
     }

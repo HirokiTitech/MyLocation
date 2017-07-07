@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements
                 .addApi(LocationServices.API)
                 .build();
 
-
+        httpResponsAsync = new HttpResponsAsync(this);
     }
 
     @Override
@@ -125,16 +125,16 @@ public class MainActivity extends AppCompatActivity implements
             JSONObject jsonObjectChild = new JSONObject();
             try{
                 jsonObjectChild.put("pole_id",ID);
-                jsonObjectChild.put("lng",longitude);
-                jsonObjectChild.put("lat",latitude);
+                jsonObjectChild.put("longitude",longitude);
+                jsonObjectChild.put("latitude",latitude);
                 final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 final Date date = new Date(System.currentTimeMillis());
                 nowTime =  df.format(date);
-                jsonObjectChild.put("time",nowTime);
-                jsonObject.put("data",jsonObjectChild);
+                //jsonObjectChild.put("time",nowTime);
+                //jsonObject.put("data",jsonObjectChild);
                 Log.d(TAG,"JSON FINISH");
-                httpResponsAsync = new HttpResponsAsync(this);
-                httpResponsAsync.execute(jsonObject);
+
+                httpResponsAsync.execute(jsonObjectChild);
 
                 Log.d(TAG,jsonObject.toString());
 
