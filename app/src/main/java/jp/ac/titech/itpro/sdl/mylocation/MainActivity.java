@@ -1,8 +1,12 @@
 package jp.ac.titech.itpro.sdl.mylocation;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.hardware.SensorManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -54,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements
             Manifest.permission.ACCESS_FINE_LOCATION
     };
     private final static int REQCODE_PERMISSIONS = 1111;
+    private int firstFlag = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         latLongView = (TextView) findViewById(R.id.latlong_view);
         idView = (TextView) findViewById(R.id.idText);
-        idView.setText(id);
         jsonView = (TextView) findViewById(R.id.jsonView);
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -70,6 +74,10 @@ public class MainActivity extends AppCompatActivity implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(10000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         httpResponsAsync = new HttpResponsAsync(this);
     }
@@ -79,6 +87,19 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onStart");
         super.onStart();
         googleApiClient.connect();
+    }
+
+
+    @Override
+    protected void onResume() {
+        Log.d(TAG, "onResume");
+        super.onResume();
+
+        if (state != UpdatingState.STARTED && googleApiClient.isConnected()) {
+            startLocationUpdate(true);
+        } else {
+            state = UpdatingState.REQUESTING;
+        }
     }
 
     @Override
@@ -114,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed");
+        Log.d(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
     }
 
     @Override
@@ -133,28 +155,33 @@ public class MainActivity extends AppCompatActivity implements
         id = Integer.valueOf(idView.getText().toString());
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        JSONObject jsonObject = new JSONObject();
-        JSONObject jsonObjectChild = new JSONObject();
-        try{
-            jsonObjectChild.put("pole_id",id);
-            jsonObjectChild.put("longitude",longitude);
-            jsonObjectChild.put("latitude",latitude);
-            final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            final Date date = new Date(System.currentTimeMillis());
-            nowTime =  df.format(date);
-            //jsonObjectChild.put("time",nowTime);
-            //jsonObject.put("data",jsonObjectChild);
-            Log.d(TAG,"JSON FINISH");
+        if(httpResponsAsync.getStatus() == AsyncTask.Status.FINISHED || firstFlag == 1) {
+            firstFlag = 0;
 
-            httpResponsAsync.execute(jsonObjectChild);
+            JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObjectChild = new JSONObject();
+            try{
+                jsonObjectChild.put("pole_id",id);
+                jsonObjectChild.put("longitude",longitude);
+                jsonObjectChild.put("latitude",latitude);
+                final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                final Date date = new Date(System.currentTimeMillis());
+                nowTime =  df.format(date);
+                //jsonObjectChild.put("time",nowTime);
+                //jsonObject.put("data",jsonObjectChild);
+                Log.d(TAG,"JSON FINISH");
+                httpResponsAsync = new HttpResponsAsync(this);
+                httpResponsAsync.execute(jsonObjectChild);
 
-            Log.d(TAG,jsonObjectChild.toString());
-            jsonView.setText(jsonObjectChild.toString());
+                Log.d(TAG,jsonObjectChild.toString());
+                jsonView.setText(jsonObjectChild.toString());
 
-        } catch (JSONException e) {
-            e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            latLongView.setText(getString(R.string.latlong_format, latitude, longitude));
         }
-        latLongView.setText(getString(R.string.latlong_format, latitude, longitude));
+
     }
 
     private void startLocationUpdate(boolean reqPermission) {
